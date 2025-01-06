@@ -10,8 +10,8 @@ env:
   JDK_VERSION: 17.0.12+7
 
 jobs:
-  build-jre-linux:
-    name: Build JRE on Linux
+  build-jre:
+    name: Build JRE
 
     runs-on: ${{ matrix.os }}
 
@@ -37,10 +37,10 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         $jlinkModules = (Get-Content modules.txt) -join ','
-        jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre
+        jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-${{ runner.os.lowercase }}
 
     - name: Upload JRE
       uses: actions/upload-artifact@v4
       with:
         name: jre-${{ env.JDK_VERSION }}-${{ runner.os.lowercase }}
-        path: jre/
+        path: jre-${{ runner.os.lowercase }}/
