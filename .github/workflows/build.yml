@@ -50,7 +50,7 @@ jobs:
         path: jre-${{ env.JRE_OS_NAME }}/
 
   build-jre-docker:
-    name: Build JRE (docker)
+    name: Build JRE Docker Image
 
     runs-on: ubuntu-latest
 
@@ -63,8 +63,6 @@ jobs:
 
     - name: Set up Docker
       uses: docker/setup-buildx-action@v3
-      with:
-        platforms: linux/amd64,linux/arm64
 
     - 
       # Docker Images Does Not Contains the plus (+) sign
@@ -78,5 +76,4 @@ jobs:
         build-args: |
           JDK_VERSION=${{ env.JDK_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
-        load: true
         tags: user/app:latest
