@@ -1,0 +1,32 @@
+ARG JDK_VERSION=17.0.13_11
+ARG DEBIAN_NAME=bookworm
+
+FROM eclipse-temurin:${JDK_VERSION}-jdk AS builder
+
+COPY modules.txt /tmp/modules.txt
+
+RUN jlink \
+    --strip-debug \
+    --no-header-files \
+    --no-man-pages \
+    --add-modules $(tr '\n' ',' < /tmp/modules.txt | sed 's/,$//') \
+    --output /opt/jre
+
+FROM debian:${DEBIAN_NAME}-slim
+
+LABEL description="Base Image for MetricsHub"
+LABEL org.opencontainers.image.title="MetricsHub JRE Base Image"
+LABEL org.opencontainers.image.description="Base Image for MetricsHub"
+LABEL org.opencontainers.image.url="https://metricshub.com"
+LABEL org.opencontainers.image.documentation="https://metricshub.com/docs/latest/"
+LABEL org.opencontainers.image.source="https://github.com/sentrysoftware/metricshub-jre-builder"
+LABEL org.opencontainers.image.vendor="Sentry Software"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+LABEL org.opencontainers.image.version="${JDK_VERSION}"
+
+COPY --from=builder /opt/jre /opt/jre
+
+ENV JRE_VERSION=${JDK_VERSION}
+ENV PATH="/opt/jre/bin:${PATH}"
+
+CMD ["java", "-version"]
