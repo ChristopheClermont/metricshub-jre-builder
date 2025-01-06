@@ -1,15 +1,13 @@
 name: Build JRE
 
 on:
-  pull_request:
-    branches: [ "main" ]
-
-  workflow_dispatch:
+  workflow_call:
     inputs:
       deploy:
+        type: boolean
         description: "Deploy to Docker Hub"
         required: true
-        default: "false"
+        default: false
 
 env:
   JDK_VERSION: 17.0.12+7
