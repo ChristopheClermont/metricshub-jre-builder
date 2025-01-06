@@ -42,5 +42,5 @@ jobs:
     - name: Upload JRE
       uses: actions/upload-artifact@v4
       with:
-        name: jre-${{ env.JDK_VERSION }}-${{ runner.os.lower() }}
+        name: jre-${{ env.JDK_VERSION }}-${{ runner.os.lowercase }}
         path: jre/
