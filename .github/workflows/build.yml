@@ -1,16 +1,19 @@
 name: Build JRE
 
 on:
-  workflow_call:
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
     inputs:
       deploy:
-        type: boolean
         description: "Deploy to Docker Hub"
         required: true
-        default: false
+        default: "false"
 
 env:
   JDK_VERSION: 17.0.12+7
+  DEPLOY_ARCHIVES: ${{ inputs.deploy || 'false' }}
 
 jobs:
   build-jre:
@@ -57,7 +60,7 @@ jobs:
         path: metricshub-jre-${{ env.JRE_OS_NAME }}/
 
     - name: Maven Deploy Archives
-      if: ${{ inputs.deploy }}
+      if: ${{ env.DEPLOY_ARCHIVES }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
@@ -97,5 +100,5 @@ jobs:
         build-args: |
           JDK_VERSION=${{ env.JDK_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
-        push: ${{ inputs.deploy }}
+        push: ${{ env.DEPLOY_ARCHIVES }}
         tags: ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:latest,${{ vars.DOCKERHUB_ORG }}/metricshub-jre:${{ env.JDK_IMAGE_TAG }}
