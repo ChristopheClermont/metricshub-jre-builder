@@ -31,16 +31,20 @@ jobs:
 
     - name: Build Linux JRE
       if: runner.os == 'Linux'
-      run: jlink --strip-debug --no-header-files --no-man-pages --add-modules $(tr '\n' ',' < modules.txt | sed 's/,$//') --output jre
+      run: |
+        jlinkModules=$(cat modules.txt | tr '\n' ',')
+        jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-linux
+        echo "JRE_OS_NAME=linux">>${GITHUB_ENV}
 
     - name: Build Windows JRE
       if: runner.os == 'Windows'
       run: |
         $jlinkModules = (Get-Content modules.txt) -join ','
-        jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-${{ runner.os.lowercase }}
+        jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
+        echo "JRE_OS_NAME=windows">>${GITHUB_ENV}
 
     - name: Upload JRE
       uses: actions/upload-artifact@v4
       with:
-        name: jre-${{ env.JDK_VERSION }}-${{ runner.os.lowercase }}
-        path: jre-${{ runner.os.lowercase }}/
+        name: jre-${{ env.JDK_VERSION }}-${{ env.JRE_OS_NAME }}
+        path: jre-${{ env.JRE_OS_NAME }}/
