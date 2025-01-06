@@ -25,9 +25,10 @@ jobs:
         distribution: temurin
 
     - name: Build JRE
-      run: jlink --strip-debug --no-header-files --no-man-pages --add-modules $(tr '\n' ',' < modules.txt | sed 's/,$//') --output /opt/jre && ls -al . && ls -al */
+      run: jlink --strip-debug --no-header-files --no-man-pages --add-modules $(tr '\n' ',' < modules.txt | sed 's/,$//') --output jre
 
     - name: Upload JRE
       uses: actions/upload-artifact@v4
       with:
-        name: jre
+        name: jre-${{ env.JDK_VERSION }}-linux
+        path: jre/
