@@ -43,18 +43,25 @@ jobs:
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
         echo "JRE_OS_NAME=windows" >> $env:GITHUB_ENV
 
-    - name: Upload JRE
+    - name: Attach JRE Archive to the Build
       uses: actions/upload-artifact@v4
       with:
         name: metricshub-jre-${{ env.JDK_VERSION }}-${{ env.JRE_OS_NAME }}
         path: jre-${{ env.JRE_OS_NAME }}/
 
   build-jre-docker:
-    name: Build JRE Docker Image
+    name: Build JRE (docker)
 
     runs-on: ubuntu-latest
 
     steps:
+    -
+      name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ vars.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
     -
       # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
@@ -76,4 +83,5 @@ jobs:
         build-args: |
           JDK_VERSION=${{ env.JDK_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
-        tags: user/app:latest
+        push: true
+        tags: metricshub/jre:latest,metricshub/jre:${{ env.JDK_IMAGE_TAG }}
