@@ -50,7 +50,7 @@ jobs:
         path: jre-${{ env.JRE_OS_NAME }}/
 
   build-jre-docker:
-    name: Build JRE Docker Image
+    name: Build JRE (docker)
 
     runs-on: ubuntu-latest
 
@@ -65,13 +65,6 @@ jobs:
       uses: docker/setup-buildx-action@v3
       with:
         platforms: linux/amd64,linux/arm64
-        buildkitd-config: |
-          {
-            "debug": true,
-            "features": {
-              "containerd-snapshotter": true
-            }
-          }
 
     - 
       # Docker Images Does Not Contains the plus (+) sign
