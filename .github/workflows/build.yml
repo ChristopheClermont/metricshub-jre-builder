@@ -5,6 +5,11 @@ on:
     branches: [ "main" ]
 
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to Docker Hub"
+        required: true
+        default: "false"
 
 env:
   JDK_VERSION: 17.0.12+7
@@ -28,6 +33,8 @@ jobs:
       with:
         java-version: ${{ env.JDK_VERSION }}
         distribution: temurin
+        java-package: jdk
+        cache: maven
 
     - name: Build Linux JRE
       if: runner.os == 'Linux'
@@ -35,19 +42,28 @@ jobs:
         jlinkModules=$(cat modules.txt | tr '\n' ',')
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-linux
         echo "JRE_OS_NAME=linux">>${GITHUB_ENV}
+        zip -r metricshub-jre-linux.zip jre-linux
 
     - name: Build Windows JRE
       if: runner.os == 'Windows'
       run: |
-        $jlinkModules = (Get-Content modules.txt) -join ','
+        $jlinkModules=(Get-Content modules.txt) -join ','
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
         echo "JRE_OS_NAME=windows" >> $env:GITHUB_ENV
+        Compress-Archive -Path jre-windows -DestinationPath metricshub-jre-windows.zip
 
     - name: Attach JRE Archive to the Build
       uses: actions/upload-artifact@v4
       with:
         name: metricshub-jre-${{ env.JDK_VERSION }}-${{ env.JRE_OS_NAME }}
-        path: jre-${{ env.JRE_OS_NAME }}/
+        path: metricshub-jre-${{ env.JRE_OS_NAME }}/
+
+    - name: Maven Deploy Archives
+      if: ${{ inputs.deploy }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        mvn deploy:deploy-file -Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY_OWNER }}/${{ env.GITHUB_REPOSITORY }} -Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip -DgroupId=org.sentrysoftware -DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }} -Dversion=${{ env.JDK_VERSION }} -Dpackaging=jlink "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
 
   build-jre-docker:
     name: Build JRE (docker)
@@ -83,5 +99,5 @@ jobs:
         build-args: |
           JDK_VERSION=${{ env.JDK_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
-        push: true
-        tags: metricshub/jre:latest,metricshub/jre:${{ env.JDK_IMAGE_TAG }}
+        push: ${{ inputs.deploy }}
+        tags: ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:latest,${{ vars.DOCKERHUB_ORG }}/metricshub-jre:${{ env.JDK_IMAGE_TAG }}
