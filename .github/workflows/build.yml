@@ -12,7 +12,12 @@ env:
 jobs:
   build-jre-linux:
     name: Build JRE on Linux
-    runs-on: ubuntu-latest
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - name: Checkout code
@@ -24,11 +29,18 @@ jobs:
         java-version: ${{ env.JDK_VERSION }}
         distribution: temurin
 
-    - name: Build JRE
+    - name: Build Linux JRE
+      if: runner.os == 'Linux'
       run: jlink --strip-debug --no-header-files --no-man-pages --add-modules $(tr '\n' ',' < modules.txt | sed 's/,$//') --output jre
+
+    - name: Build Windows JRE
+      if: runner.os == 'Windows'
+      run: |
+        $jlinkModules = (Get-Content modules.txt) -join ','
+        jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre
 
     - name: Upload JRE
       uses: actions/upload-artifact@v4
       with:
-        name: jre-${{ env.JDK_VERSION }}-linux
+        name: jre-${{ env.JDK_VERSION }}-${{ runner.os.lower() }}
         path: jre/
