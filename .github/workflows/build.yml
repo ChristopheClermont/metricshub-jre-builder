@@ -3,19 +3,11 @@ name: Build JRE
 on:
   pull_request:
     branches: [ "main" ]
-
   workflow_call:
-
   workflow_dispatch:
-    inputs:
-      deploy:
-        description: "Deploy to Repositories"
-        required: true
-        default: "false"
 
 env:
   JDK_VERSION: 17.0.12+7
-  DEPLOY_ARCHIVES: ${{ inputs.deploy || 'false' }}
 
 jobs:
   build-jre:
@@ -54,7 +46,6 @@ jobs:
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
         echo "JRE_OS_NAME=windows" >> $env:GITHUB_ENV
         Compress-Archive -Path jre-windows\* -DestinationPath metricshub-jre-windows.zip
-        Get-ChildItem
 
     - name: Attach JRE Archive to the Build
       uses: actions/upload-artifact@v4
@@ -62,28 +53,12 @@ jobs:
         name: metricshub-jre-${{ env.JDK_VERSION }}-${{ env.JRE_OS_NAME }}
         path: metricshub-jre-${{ env.JRE_OS_NAME }}.zip
 
-    - name: Maven Deploy Archives
-      if: ${{ env.DEPLOY_ARCHIVES == 'true' }}
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-      run: |
-        mvn deploy:deploy-file -Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY_OWNER }}/${{ env.GITHUB_REPOSITORY }} -Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip -DgroupId=org.sentrysoftware -DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }} -Dversion=${{ env.JDK_VERSION }} -Dpackaging=jlink "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
-
   build-jre-docker:
     name: Build JRE (docker)
 
     runs-on: ubuntu-latest
 
     steps:
-    -
-      name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ vars.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
     -
       # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
@@ -105,5 +80,5 @@ jobs:
         build-args: |
           JDK_VERSION=${{ env.JDK_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
-        push: ${{ env.DEPLOY_ARCHIVES }}
+        push: false
         tags: ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:latest,${{ vars.DOCKERHUB_ORG }}/metricshub-jre:${{ env.JDK_IMAGE_TAG }}
