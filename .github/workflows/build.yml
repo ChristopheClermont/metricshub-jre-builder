@@ -45,8 +45,7 @@ jobs:
         jlinkModules=$(cat modules.txt | tr '\n' ',')
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-linux
         echo "JRE_OS_NAME=linux">>${GITHUB_ENV}
-        zip -r metricshub-jre-linux.zip jre-linux/
-        ls -al
+        cd jre-linux/ && zip -r ../metricshub-jre-linux.zip .
 
     - name: Build Windows JRE
       if: runner.os == 'Windows'
@@ -54,7 +53,7 @@ jobs:
         $jlinkModules=(Get-Content modules.txt) -join ','
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
         echo "JRE_OS_NAME=windows" >> $env:GITHUB_ENV
-        Compress-Archive -Path jre-windows/ -DestinationPath metricshub-jre-windows.zip
+        Compress-Archive -Path jre-windows\* -DestinationPath metricshub-jre-windows.zip
         Get-ChildItem
 
     - name: Attach JRE Archive to the Build
