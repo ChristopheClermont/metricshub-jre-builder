@@ -13,6 +13,8 @@ RUN jlink \
     --output /opt/jre
 
 FROM debian:${DEBIAN_NAME}-slim
+# Redefines the ARG to make it available in the final image
+ARG JDK_VERSION=${JDK_VERSION}
 
 LABEL description="Base Image for MetricsHub"
 LABEL org.opencontainers.image.title="MetricsHub JRE Base Image"
