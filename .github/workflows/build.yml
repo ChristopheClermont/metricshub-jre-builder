@@ -59,7 +59,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: metricshub-jre-${{ env.JDK_VERSION }}-${{ env.JRE_OS_NAME }}
-        path: metricshub-jre-${{ env.JRE_OS_NAME }}/
+        path: metricshub-jre-${{ env.JRE_OS_NAME }}.zip
 
     - name: Maven Deploy Archives
       if: ${{ env.DEPLOY_ARCHIVES == 'true' }}
