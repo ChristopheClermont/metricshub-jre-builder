@@ -1,10 +1,21 @@
-name: Build JRE
+name: Build and Deploy JRE
 
 on:
-  pull_request:
-    branches: [ "main" ]
   workflow_call:
+    inputs:
+      deploy:
+        type: boolean
+        description: Deploy JRE to Maven and Docker Repositories
+        required: true
+        default: false
+
   workflow_dispatch:
+    inputs:
+      deploy:
+        type: boolean
+        description: Deploy JRE to Maven and Docker Repositories
+        required: true
+        default: false
 
 env:
   JDK_VERSION: 17.0.12+7
@@ -53,6 +64,15 @@ jobs:
         name: metricshub-jre-${{ env.JDK_VERSION }}-${{ env.JRE_OS_NAME }}
         path: metricshub-jre-${{ env.JRE_OS_NAME }}.zip
 
+    - name: Maven Deploy Archives
+      if: ${{ inputs.deploy == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        mvn deploy:deploy-file -Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY_OWNER }}/${{ env.GITHUB_REPOSITORY }} -Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip -DgroupId=org.sentrysoftware -DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }} -Dversion=${{ env.JDK_VERSION }} -Dpackaging=jlink "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
+  
   build-jre-docker:
     name: Build JRE (docker)
 
@@ -87,5 +107,5 @@ jobs:
         build-args: |
           JDK_VERSION=${{ env.JDK_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
-        push: true
+        push: ${{ inputs.deploy }}
         tags: ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:latest,${{ vars.DOCKERHUB_ORG }}/metricshub-jre:${{ env.JDK_IMAGE_TAG }}
