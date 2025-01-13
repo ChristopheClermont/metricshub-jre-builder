@@ -65,7 +65,7 @@ jobs:
         path: metricshub-jre-${{ env.JRE_OS_NAME }}.zip
 
     - name: Maven Deploy Archives
-      if: ${{ inputs.deploy == 'true' }}
+      if: ${{ inputs.deploy }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
         GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
