@@ -72,8 +72,8 @@ jobs:
       if: ${{ inputs.deploy }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
-        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner | toLower }}
-        GITHUB_REPOSITORY: ${{ github.repository | toLower }}
+        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
       run: |
         mvn deploy:deploy-file -Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY_OWNER }}/${{ env.GITHUB_REPOSITORY }} -Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip -DgroupId=org.sentrysoftware -DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }} -Dversion=${{ env.JDK_VERSION }} -Dpackaging=jlink "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
 
@@ -106,8 +106,11 @@ jobs:
     - 
       # Docker Images Does Not Contains the plus (+) sign
       # Must be replaced with underscore (_)
-      name: Prepare version number
-      run: echo "JDK_IMAGE_TAG=${{ env.JDK_VERSION }}" | sed 's/+/_/g' >> $GITHUB_ENV
+      name: Prepare Environment Variables
+      run: |
+        echo "JDK_IMAGE_TAG=${{ env.JDK_VERSION }}" | sed 's/+/_/g' >> $GITHUB_ENV
+        echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        echo "REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
     - name: Build and push
       uses: docker/build-push-action@v6
@@ -119,5 +122,5 @@ jobs:
         tags: |
           ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:latest
           ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:${{ env.JDK_IMAGE_TAG }}
-          ghcr.io/${{ github.repository_owner | toLower }}/${{ github.repository | toLower }}:latest
-          ghcr.io/${{ github.repository_owner | toLower }}/${{ github.repository | toLower }}:${{ env.JDK_IMAGE_TAG }}
+          ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
+          ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:${{ env.JDK_IMAGE_TAG }}
