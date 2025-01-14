@@ -26,6 +26,10 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    permissions:
+      contents: read
+      packages: write
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -72,11 +76,15 @@ jobs:
         GITHUB_REPOSITORY: ${{ github.repository }}
       run: |
         mvn deploy:deploy-file -Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY_OWNER }}/${{ env.GITHUB_REPOSITORY }} -Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip -DgroupId=org.sentrysoftware -DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }} -Dversion=${{ env.JDK_VERSION }} -Dpackaging=jlink "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
-  
+
   build-jre-docker:
     name: Build JRE (docker)
 
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     -
@@ -108,4 +116,8 @@ jobs:
           JDK_VERSION=${{ env.JDK_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
         push: ${{ inputs.deploy }}
-        tags: ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:latest,${{ vars.DOCKERHUB_ORG }}/metricshub-jre:${{ env.JDK_IMAGE_TAG }}
+        tags: |
+          ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:latest
+          ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:${{ env.JDK_IMAGE_TAG }}
+          ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+          ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ env.JDK_IMAGE_TAG }}
