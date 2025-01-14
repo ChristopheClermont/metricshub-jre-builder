@@ -77,7 +77,7 @@ jobs:
         GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         GITHUB_REPOSITORY: ${{ github.repository }}
       run: |
-        mvn deploy:deploy-file -s "${{ env.GITHUB_WORKSPACE }}/settings.xml" -Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY_OWNER }}/${{ env.GITHUB_REPOSITORY }} -Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip -DgroupId=org.sentrysoftware -DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }} -Dversion=${{ env.JDK_VERSION }} -Dpackaging=jlink "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
+        mvn deploy:deploy-file -s "${{ github.workspace }}/settings.xml" -Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY_OWNER }}/${{ env.GITHUB_REPOSITORY }} -Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip -DgroupId=org.sentrysoftware -DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }} -Dversion=${{ env.JDK_VERSION }} -Dpackaging=jlink "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
 
   build-jre-docker:
     name: Build JRE (docker)
