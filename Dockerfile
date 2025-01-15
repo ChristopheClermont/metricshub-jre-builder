@@ -1,4 +1,4 @@
-ARG JDK_VERSION=17.0.13_11
+ARG JDK_VERSION=17.0.12+7
 ARG DEBIAN_NAME=bookworm
 
 FROM eclipse-temurin:${JDK_VERSION}-jdk AS builder
