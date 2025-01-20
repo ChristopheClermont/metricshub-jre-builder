@@ -38,7 +38,7 @@ jobs:
       run: |
         URL=${{ env.BASE_URL }}/${{ env.MAJOR_VERSION }}/${{ env.RELEASE_TYPE }}?architecture=${{ env.ARCHITECTURE }}&heap_size=${{ env.HEAP_SIZE }}&image_type=${{ env.IMAGE_TYPE }}&jvm_impl=${{ env.JVM_IMPLEMENTATION }}&os=${{ env.OS }}&page=0&page_size=1&project=jdk&sort_order=DESC&vendor=${{ env.JRE_VENDOR }}
         release=$(curl -s ${URL} | jq -r '.[0].version_data.semver')
-        echo "::set-output name=release::$release"
+        echo "release=$release" >> $GITHUB_OUTPUT
 
     - name: Check if release is different
       id: check_release
@@ -50,10 +50,10 @@ jobs:
           NEXT_VERSION=$(echo ${{ steps.get_release.outputs.release }} | sed 's/+/_/g')
           echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
           echo "BRANCH_NAME=feature/v${NEXT_VERSION}" >> $GITHUB_ENV
-          echo "::set-output name=create_pr::true"
+          echo "create_pr=true" >> $GITHUB_OUTPUT
         else
           echo "Release ${{ steps.get_release.outputs.release }} is the same as ${current_release}"
-          echo "::set-output name=create_pr::false"
+          echo "create_pr=false" >> $GITHUB_OUTPUT
         fi
 
     - name: Configure Git User
