@@ -41,7 +41,7 @@ jobs:
     - name: Set up JDK ${{ env.JDK_VERSION }}
       uses: actions/setup-java@v4
       with:
-        java-version: ${{ env.JDK_VERSION }}
+        java-version-file: .java-version
         distribution: temurin
         java-package: jdk
         server-id: github
@@ -54,7 +54,7 @@ jobs:
         jlinkModules=$(cat modules.txt | tr '\n' ',')
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-linux
         JRE_VERSION=$(echo "${{ env.JDK_VERSION }}" | sed 's/+/_/g')
-        if [ "${GITHUB_REF##*/}" != "main" ]; then
+        if [ "${GITHUB_REF##*/}" != "${{ github.event.repository.default_branch }}" ]; then
           JRE_VERSION=${JRE_VERSION}-SNAPSHOT
         fi
         echo "JRE_VERSION=${JRE_VERSION}" >> $GITHUB_ENV
@@ -68,7 +68,7 @@ jobs:
         $jlinkModules=(Get-Content modules.txt) -join ','
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
         $JRE_VERSION = $env:JDK_VERSION -replace '\+', '_'
-        if (($env:GITHUB_REF -split '/' | Select-Object -Last 1) -ne 'main') {
+        if (($env:GITHUB_REF -split '/' | Select-Object -Last 1) -ne '${{ github.event.repository.default_branch }}') {
           $JRE_VERSION = "${JRE_VERSION}-SNAPSHOT"
         }
         echo "JRE_VERSION=$JRE_VERSION" >> $env:GITHUB_ENV
