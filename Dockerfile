@@ -1,4 +1,4 @@
-ARG JDK_VERSION=17.0.12+7
+ARG JDK_VERSION=17.0.12_7
 ARG DEBIAN_NAME=bookworm
 
 FROM eclipse-temurin:${JDK_VERSION}-jdk AS builder
@@ -26,9 +26,9 @@ LABEL org.opencontainers.image.vendor="Sentry Software"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.version="${JDK_VERSION}"
 
-COPY --from=builder /opt/jre /opt/jre
+COPY --from=builder /opt/jre /opt/metricshub/lib/runtime
 
 ENV JRE_VERSION=${JDK_VERSION}
-ENV PATH="/opt/jre/bin:${PATH}"
+ENV PATH="/opt/metricshub/lib/runtime/bin:${PATH}"
 
 CMD ["java", "-version"]

@@ -48,25 +48,31 @@ jobs:
         settings-path: ${{ github.workspace }} # location for the settings.xml file
 
     - name: Build Linux JRE
-      if: runner.os == 'Linux'
+      #if: runner.os == 'Linux'
+      shell: bash
       run: |
         jlinkModules=$(cat modules.txt | tr '\n' ',')
         jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-linux
+        JRE_VERSION=$(echo "${{ env.JDK_VERSION }}" | sed 's/+/_/g')
+        if [ "${GITHUB_REF##*/}" != "main" ]; then
+          JRE_VERSION=${JRE_VERSION}-SNAPSHOT
+        fi
+        echo "JRE_VERSION=${JRE_VERSION}" >> $GITHUB_ENV
         echo "JRE_OS_NAME=linux">>${GITHUB_ENV}
         cd jre-linux/ && zip -r ../metricshub-jre-linux.zip .
 
-    - name: Build Windows JRE
-      if: runner.os == 'Windows'
-      run: |
-        $jlinkModules=(Get-Content modules.txt) -join ','
-        jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
-        echo "JRE_OS_NAME=windows" >> $env:GITHUB_ENV
-        Compress-Archive -Path jre-windows\* -DestinationPath metricshub-jre-windows.zip
+    #- name: Build Windows JRE
+    #  if: runner.os == 'Windows'
+    #  run: |
+    #    $jlinkModules=(Get-Content modules.txt) -join ','
+    #    jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
+    #    echo "JRE_OS_NAME=windows" >> $env:GITHUB_ENV
+    #    Compress-Archive -Path jre-windows\* -DestinationPath metricshub-jre-windows.zip
 
     - name: Attach JRE Archive to the Build
       uses: actions/upload-artifact@v4
       with:
-        name: metricshub-jre-${{ env.JDK_VERSION }}-${{ env.JRE_OS_NAME }}
+        name: metricshub-jre-${{ env.JRE_VERSION }}-${{ env.JRE_OS_NAME }}
         path: metricshub-jre-${{ env.JRE_OS_NAME }}.zip
 
     - name: Maven Deploy Archives
@@ -75,7 +81,7 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
         GITHUB_REPOSITORY: ${{ github.repository }}
       run: |
-        mvn deploy:deploy-file -s "${{ github.workspace }}/settings.xml" "-DrepositoryId=github" "-Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY }}" "-Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip" "-DgroupId=org.sentrysoftware" "-DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }}" "-Dversion=${{ env.JDK_VERSION }}" "-Dpackaging=jlink" "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
+        mvn deploy:deploy-file -s "${{ github.workspace }}/settings.xml" "-DrepositoryId=github" "-Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY }}" "-Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip" "-DgroupId=org.sentrysoftware" "-DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }}" "-Dversion=${{ env.JRE_VERSION }}" "-Dpackaging=jlink" "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
 
   build-jre-docker:
     name: Build JRE (docker)
