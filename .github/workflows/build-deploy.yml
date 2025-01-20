@@ -48,7 +48,7 @@ jobs:
         settings-path: ${{ github.workspace }} # location for the settings.xml file
 
     - name: Build Linux JRE
-      #if: runner.os == 'Linux'
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         jlinkModules=$(cat modules.txt | tr '\n' ',')
@@ -61,13 +61,19 @@ jobs:
         echo "JRE_OS_NAME=linux">>${GITHUB_ENV}
         cd jre-linux/ && zip -r ../metricshub-jre-linux.zip .
 
-    #- name: Build Windows JRE
-    #  if: runner.os == 'Windows'
-    #  run: |
-    #    $jlinkModules=(Get-Content modules.txt) -join ','
-    #    jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
-    #    echo "JRE_OS_NAME=windows" >> $env:GITHUB_ENV
-    #    Compress-Archive -Path jre-windows\* -DestinationPath metricshub-jre-windows.zip
+    - name: Build Windows JRE
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $jlinkModules=(Get-Content modules.txt) -join ','
+        jlink --strip-debug --no-header-files --no-man-pages --add-modules $jlinkModules --output jre-windows
+        $JRE_VERSION = $env:JDK_VERSION -replace '\+', '_'
+        if ($env:GITHUB_REF -split '/' | Select-Object -Last 1 -ne 'main') {
+          $JRE_VERSION = "${JRE_VERSION}-SNAPSHOT"
+        }
+        echo "JRE_VERSION=$JRE_VERSION" >> $env:GITHUB_ENV
+        echo "JRE_OS_NAME=windows" >> $env:GITHUB_ENV
+        Compress-Archive -Path jre-windows\* -DestinationPath metricshub-jre-windows.zip
 
     - name: Attach JRE Archive to the Build
       uses: actions/upload-artifact@v4
