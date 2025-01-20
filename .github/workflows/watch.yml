@@ -1,0 +1,99 @@
+name: Watch Latest Release
+
+on:
+  workflow_dispatch
+
+env:
+  BASE_URL: https://api.adoptium.net/v3/assets/feature_releases
+  MAJOR_VERSION: 17
+  RELEASE_TYPE: ga 
+  ARCHITECTURE: x64
+  HEAP_SIZE: normal
+  IMAGE_TYPE: jre
+  JVM_IMPLEMENTATION: hotspot
+  OS: linux
+  JRE_VENDOR: eclipse
+
+permissions:
+  contents: write
+  pull-requests: write
+  pages: write
+  id-token: write
+  packages: write
+
+# Allow only one concurrent execution, skipping runs queued between the run in-progress and latest queued.
+concurrency:
+  group: watch
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get Latest Release
+      id: get_release
+      run: |
+        URL=${{ env.BASE_URL }}/${{ env.MAJOR_VERSION }}/${{ env.RELEASE_TYPE }}?architecture=${{ env.ARCHITECTURE }}&heap_size=${{ env.HEAP_SIZE }}&image_type=${{ env.IMAGE_TYPE }}&jvm_impl=${{ env.JVM_IMPLEMENTATION }}&os=${{ env.OS }}&page=0&page_size=1&project=jdk&sort_order=DESC&vendor=${{ env.JRE_VENDOR }}
+        release=$(curl -s ${URL} | jq -r '.[0].version_data.semver')
+        echo "::set-output name=release::$release"
+
+    - name: Check if release is different
+      id: check_release
+      run: |
+        current_release=$(cat .github/workflows/build-deploy.yml | grep "JDK_VERSION" | awk -F: '{print $2}' | tr -d ' ')
+        if [ "${{ steps.get_release.outputs.release }}" != "${current_release}" ]; then
+          echo "Release ${{ steps.get_release.outputs.release }} is different from ${current_release}"
+          echo "NEXT_VERSION_SEMVER=${{ steps.get_release.outputs.release }}" >> $GITHUB_ENV
+          NEXT_VERSION=$(echo ${{ steps.get_release.outputs.release }} | sed 's/+/_/g')
+          echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
+          echo "BRANCH_NAME=feature/v${NEXT_VERSION}" >> $GITHUB_ENV
+          echo "::set-output name=create_pr::true"
+        else
+          echo "Release ${{ steps.get_release.outputs.release }} is the same as ${current_release}"
+          echo "::set-output name=create_pr::false"
+        fi
+
+    - name: Configure Git User
+      if: steps.check_release.outputs.create_pr == 'true'
+      run: |
+        git config user.email "actions@github.com"
+        git config user.name "GitHub Actions"
+
+    - name: Create ${{ env.BRANCH_NAME }} branch
+      if: steps.check_release.outputs.create_pr == 'true'
+      run: |
+        git checkout ${{ env.BRANCH_NAME }} 2>/dev/null || git checkout -b ${{ env.BRANCH_NAME }}
+        git push --force origin ${{ env.branchName }}
+
+    - name: Update Latest Version in Files
+      if: steps.check_release.outputs.create_pr == 'true'
+      run: |
+        sed -i "s/JDK_VERSION: .*/JDK_VERSION: ${{ env.NEXT_VERSION_SEMVER }}/g" .github/workflows/build-deploy.yml
+        sed -i "s/JDK_VERSION=.*/JDK_VERSION=${{ env.NEXT_VERSION }}/g" Dockerfile
+        sed -i "s/<version>.*<\/version>/<version>${{ env.NEXT_VERSION_SEMVER }}<\/version>/g" README.md
+
+    - name: Commit and Push ${{ env.NEXT_VERSION_SEMVER }}
+      if: steps.check_release.outputs.create_pr == 'true'
+      run: |
+        git add README.md Dockerfile .github/workflows/build-deploy.yml
+        git commit -m "Updated Version to ${{ env.NEXT_VERSION_SEMVER }}"
+        git push origin ${{ env.BRANCH_NAME }}
+
+    - name: Create Pull Request from ${{ env.BRANCH_NAME }} to ${{ github.event.repository.default_branch }}
+      if: steps.check_release.outputs.create_pr == 'true'
+      uses: devops-infra/action-pull-request@v0.5.5
+      with:
+        github_token: ${{ github.token }}
+        source_branch: ${{ env.BRANCH_NAME }}
+        target_branch: ${{ github.event.repository.default_branch }}
+        title: Prepare ${{ env.NEXT_VERSION_SEMVER }}
+        body: |
+          ## Automated update of version
+          
+          * Prepare **${{ env.NEXT_VERSION_SEMVER }}**
+        label: automatic
+        get_diff: true
+        allow_no_diff: true

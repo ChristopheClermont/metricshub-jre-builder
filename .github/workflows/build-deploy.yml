@@ -44,8 +44,8 @@ jobs:
         java-version: ${{ env.JDK_VERSION }}
         distribution: temurin
         java-package: jdk
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+        server-id: github
+        settings-path: ${{ github.workspace }}
 
     - name: Build Linux JRE
       if: runner.os == 'Linux'
