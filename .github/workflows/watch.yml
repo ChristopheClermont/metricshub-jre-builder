@@ -36,7 +36,7 @@ jobs:
     - name: Get Latest Release
       id: get_release
       run: |
-        temurin_url=${{ env.BASE_URL }}/${{ env.MAJOR_VERSION }}/${{ env.RELEASE_TYPE }}?architecture=${{ env.ARCHITECTURE }}&heap_size=${{ env.HEAP_SIZE }}&image_type=${{ env.IMAGE_TYPE }}&jvm_impl=${{ env.JVM_IMPLEMENTATION }}&os=${{ env.OS }}&page=0&page_size=1&project=jdk&sort_order=DESC&vendor=${{ env.JRE_VENDOR }}
+        export "temurin_url=${{ env.BASE_URL }}/${{ env.MAJOR_VERSION }}/${{ env.RELEASE_TYPE }}?architecture=${{ env.ARCHITECTURE }}&heap_size=${{ env.HEAP_SIZE }}&image_type=${{ env.IMAGE_TYPE }}&jvm_impl=${{ env.JVM_IMPLEMENTATION }}&os=${{ env.OS }}&page=0&page_size=1&project=jdk&sort_order=DESC&vendor=${{ env.JRE_VENDOR }}"
         release=$(curl -s $temurin_url | jq -r '.[0].version_data.semver')
         echo "release=$release" >> $GITHUB_OUTPUT
 
