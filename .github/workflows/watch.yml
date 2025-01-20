@@ -17,9 +17,8 @@ env:
 permissions:
   contents: write
   pull-requests: write
-  pages: write
   id-token: write
-  packages: write
+  workflows: write
 
 # Allow only one concurrent execution, skipping runs queued between the run in-progress and latest queued.
 concurrency:
