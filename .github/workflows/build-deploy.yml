@@ -17,9 +17,6 @@ on:
         required: true
         default: false
 
-env:
-  JDK_VERSION: 17.0.12+7
-
 jobs:
   build-jre:
     name: Build JRE
@@ -38,7 +35,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up JDK
+    - name: Read JDK Version
+      run: echo JDK_VERSION=$(cat .java-version) >> $GITHUB_ENV
+
+    - name: Set up JDK ${{ env.JDK_VERSION }}
       uses: actions/setup-java@v4
       with:
         java-version: ${{ env.JDK_VERSION }}
@@ -47,7 +47,7 @@ jobs:
         server-id: github
         settings-path: ${{ github.workspace }}
 
-    - name: Build Linux JRE
+    - name: Build Linux JRE ${{ env.JDK_VERSION }}
       if: runner.os == 'Linux'
       shell: bash
       run: |
@@ -61,7 +61,7 @@ jobs:
         echo "JRE_OS_NAME=linux">>${GITHUB_ENV}
         cd jre-linux/ && zip -r ../metricshub-jre-linux.zip .
 
-    - name: Build Windows JRE
+    - name: Build Windows JRE ${{ env.JDK_VERSION }}
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
@@ -81,7 +81,7 @@ jobs:
         name: metricshub-jre-${{ env.JRE_VERSION }}-${{ env.JRE_OS_NAME }}
         path: metricshub-jre-${{ env.JRE_OS_NAME }}.zip
 
-    - name: Maven Deploy Archives
+    - name: Maven Deploy ${{ env.JRE_VERSION }}
       if: ${{ inputs.deploy }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
@@ -99,13 +99,6 @@ jobs:
       packages: write
 
     steps:
-    -
-      name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ vars.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
     -
       name: Login to GitHub Container Registry
       uses: docker/login-action@v3
@@ -128,18 +121,17 @@ jobs:
       # Must be replaced with underscore (_)
       name: Prepare Environment Variables
       run: |
-        echo "JDK_IMAGE_TAG=${{ env.JDK_VERSION }}" | sed 's/+/_/g' >> $GITHUB_ENV
+        export JDK_VERSION=$(cat .java-version)
+        echo "JDK_VERSION=${JDK_VERSION}" | sed 's/+/_/g' >> $GITHUB_ENV
         echo "REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-    - name: Build and push
+    - name: Build and Push ${{ env.JDK_VERSION }}
       uses: docker/build-push-action@v6
       with:
         build-args: |
-          JDK_VERSION=${{ env.JDK_IMAGE_TAG }}
+          JDK_VERSION=${{ env.JDK_VERSION }}
         platforms: linux/amd64,linux/arm64
         push: ${{ inputs.deploy }}
         tags: |
-          ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:latest
-          ${{ vars.DOCKERHUB_ORG }}/metricshub-jre:${{ env.JDK_IMAGE_TAG }}
           ghcr.io/${{ env.REPO_NAME }}:latest
-          ghcr.io/${{ env.REPO_NAME }}:${{ env.JDK_IMAGE_TAG }}
+          ghcr.io/${{ env.REPO_NAME }}:${{ env.JDK_VERSION }}
