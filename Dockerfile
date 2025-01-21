@@ -1,4 +1,4 @@
-ARG JDK_VERSION=17.0.12_7
+ARG JDK_VERSION=17.0.13_11
 ARG DEBIAN_NAME=bookworm
 
 FROM eclipse-temurin:${JDK_VERSION}-jdk AS builder
@@ -14,7 +14,7 @@ RUN jlink \
 
 FROM debian:${DEBIAN_NAME}-slim
 # Redefines the ARG to make it available in the final image
-ARG JDK_VERSION=${JDK_VERSION}
+ARG JDK_VERSION=17.0.13_11
 
 LABEL description="Base Image for MetricsHub"
 LABEL org.opencontainers.image.title="MetricsHub JRE Base Image"
