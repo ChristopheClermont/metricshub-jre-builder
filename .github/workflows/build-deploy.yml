@@ -8,16 +8,6 @@ on:
         description: Deploy JRE to Maven and Docker Repositories
         required: true
         default: false
-    outputs:
-      linuxPackageId:
-        description: GitHub Package ID for Linux JRE
-        value: ${{ jobs.build-jre.outputs.linuxPackageId }}
-      windowsPackageId:
-        description: GitHub Package ID for Windows JRE
-        value: ${{ jobs.build-jre.outputs.windowsPackageId }}
-      dockerImageId:
-        description: Docker Image ID
-        value: ${{ jobs.build-jre-docker.outputs.imageid }}
 
   workflow_dispatch:
     inputs:
@@ -32,10 +22,6 @@ jobs:
     name: Build JRE
 
     runs-on: ${{ matrix.os }}
-
-    outputs:
-      linuxPackageId: ${{ matrix.os == 'ubuntu-latest' && steps.versionId.outputs.packageId || '' }}
-      windowsPackageId: ${{ matrix.os == 'windows-latest' && steps.versionId.outputs.packageId || '' }}
 
     permissions:
       contents: write
@@ -104,26 +90,10 @@ jobs:
       run: |
         mvn deploy:deploy-file -s "${{ github.workspace }}/settings.xml" "-DrepositoryId=github" "-Durl=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY }}" "-Dfile=metricshub-jre-${{ env.JRE_OS_NAME }}.zip" "-DgroupId=org.sentrysoftware" "-DartifactId=metricshub-jre-${{ env.JRE_OS_NAME }}" "-Dversion=${{ env.JRE_VERSION }}" "-Dpackaging=jlink" "-Ddescription=MetricsHub JRE for ${{ runner.os }}"
 
-    - name: Export Packages ID
-      id: versionId
-      if: steps.perform.outcome != 'failure'
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        GITHUB_ORGANIZATION: ${{ github.organization }}
-      run: |
-        curl -X GET -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}" https://api.github.com/orgs/${{ env.GITHUB_ORGANIZATION }}/packages/maven/org.sentrysoftware.metricshub-jre-${{ env.JRE_OS_NAME }}/versions >> $HOME/versionIds.json
-        export packageId=$(grep -B1 '"name": "${{ env.JRE_VERSION }}"' $HOME/versionIds.json | grep '"id":' | awk -F': ' '{print $2}' | tr -d ',')
-        echo "packageId=${packageId}" >> $GITHUB_OUTPUT
-
   build-jre-docker:
     name: Build JRE (docker)
 
     runs-on: ubuntu-latest
-
-    outputs:
-      imageid: ${{ steps.push.outputs.imageid || '' }}
-      digest: ${{ steps.push.outputs.digest }} || '' }}
-      metadata: ${{ steps.push.outputs.metadata || '' }}
 
     permissions:
       contents: read
