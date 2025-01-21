@@ -15,7 +15,7 @@ To integrate the MetricsHub Windows JRE into the MetricsHub Windows distribution
 	<dependency>
 		<groupId>org.sentrysoftware</groupId>
 		<artifactId>metricshub-jre-windows</artifactId>
-		<version>17.0.12_7</version>
+		<version>17.0.13_11</version>
 		<type>zip</type>
 	</dependency>
 ```
@@ -26,7 +26,7 @@ To integrate the MetricsHub Linux JRE into the MetricsHub Linux distributions (D
 	<dependency>
 		<groupId>org.sentrysoftware</groupId>
 		<artifactId>metricshub-jre-linux</artifactId>
-		<version>17.0.12_7</version>
+		<version>17.0.13_11</version>
 		<type>zip</type>
 	</dependency>
 ```
