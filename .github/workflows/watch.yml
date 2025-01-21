@@ -17,7 +17,6 @@ env:
 permissions:
   contents: write
   pull-requests: write
-  #id-token: write
 
 # Allow only one concurrent execution, skipping runs queued between the run in-progress and latest queued.
 concurrency:
@@ -25,6 +24,8 @@ concurrency:
 
 jobs:
   watch:
+    name: Watch Latest Release
+
     runs-on: ubuntu-latest
 
     steps:
