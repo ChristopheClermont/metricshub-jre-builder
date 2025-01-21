@@ -1,7 +1,9 @@
 name: Watch Latest Release
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  schedule:
+    - cron: '0 13 * * 2'
 
 env:
   BASE_URL: https://api.adoptium.net/v3/assets/feature_releases
