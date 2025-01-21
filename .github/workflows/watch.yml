@@ -73,7 +73,7 @@ jobs:
       if: steps.check_release.outputs.create_pr == 'true'
       run: |
         echo ${{ env.NEXT_VERSION_SEMVER }} > .java-version
-        sed -i "s/JDK_VERSION=.*/JDK_VERSION=${{ env.NEXT_VERSION }}/" Dockerfile
+        sed -i "0,/JDK_VERSION=.*/s//JDK_VERSION=${{ env.NEXT_VERSION }}/" Dockerfile
         sed -i "s/<version>.*<\/version>/<version>${{ env.NEXT_VERSION }}<\/version>/g" README.md
         CHANGES=$(git diff --name-only)
         if [ -n "$CHANGES" ]; then
