@@ -69,21 +69,29 @@ jobs:
         git push --force --set-upstream origin ${{ env.BRANCH_NAME }}
 
     - name: Update Latest Version in Files
+      id: update_version
       if: steps.check_release.outputs.create_pr == 'true'
       run: |
         echo ${{ env.NEXT_VERSION_SEMVER }} > .java-version
         sed -i "s/JDK_VERSION=.*/JDK_VERSION=${{ env.NEXT_VERSION }}/g" Dockerfile
         sed -i "s/<version>.*<\/version>/<version>${{ env.NEXT_VERSION_SEMVER }}<\/version>/g" README.md
+        CHANGES=$(git diff --name-only)
+        if [ -n "$CHANGES" ]; then
+          echo "changes=true" >> $GITHUB_OUTPUT
+        else
+          echo No changes detected in branch ${{ env.BRANCH_NAME }}
+          echo "changes=false" >> $GITHUB_OUTPUT
+        fi
 
     - name: Commit and Push ${{ env.NEXT_VERSION_SEMVER }}
-      if: steps.check_release.outputs.create_pr == 'true'
+      if: steps.update_version.outputs.changes == 'true'
       run: |
         git add .java-version README.md Dockerfile
         git commit -m "Updated Version to ${{ env.NEXT_VERSION_SEMVER }}"
         git push origin ${{ env.BRANCH_NAME }}
 
     - name: Create Pull Request from ${{ env.BRANCH_NAME }} to ${{ github.event.repository.default_branch }}
-      if: steps.check_release.outputs.create_pr == 'true'
+      if: steps.update_version.outputs.changes == 'true'
       uses: devops-infra/action-pull-request@v0.5.5
       with:
         github_token: ${{ github.token }}
