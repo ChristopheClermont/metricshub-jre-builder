@@ -38,7 +38,7 @@ jobs:
     - name: Read JDK Version
       run: |
         echo "JDK_VERSION=$(cat .java-version)" >> $GITHUB_ENV
-        echo "JDK_VERSION=$(cat .java-version)"
+        echo "JDK_VERSION=$(cat .java-version)" >> $env:GITHUB_ENV
 
     - name: Set up JDK ${{ env.JDK_VERSION }}
       uses: actions/setup-java@v4
