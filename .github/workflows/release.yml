@@ -1,4 +1,4 @@
-name: Release JRE
+name: Release
 
 on:
   push:
