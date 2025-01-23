@@ -46,7 +46,7 @@ jobs:
     - name: Check if release is different
       id: check_release
       run: |
-        current_version=$(cat .github/workflows/build-deploy.yml | grep "JDK_VERSION" | awk -F: '{print $2}' | tr -d ' ')
+        current_version=$(cat .java-version)
         echo "CURRENT_VERSION_SEMVER=${current_version}" >> $GITHUB_ENV
         echo "CURRENT_VERSION=$(echo $current_version | sed 's/+/_/g')" >> $GITHUB_ENV
         if [ "${{ steps.get_release.outputs.release }}" != "${current_version}" ]; then

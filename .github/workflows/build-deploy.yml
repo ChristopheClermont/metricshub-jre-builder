@@ -117,8 +117,6 @@ jobs:
   build-jre-docker:
     name: Build JRE (docker)
 
-    needs: build-jre
-
     runs-on: ubuntu-latest
 
     permissions:
